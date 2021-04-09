@@ -1,32 +1,84 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view/>
-  </div>
+	<div id="app">
+		<div class="container">
+			<Modal
+				:packageInfo="packageInfo"
+				:pack="pack"/>
+			<Search @search="search"/>
+			<Table
+				:packages="resultPackages"
+				@detailedInfo="detailedInfo"
+			/>
+			<Footer/>
+		</div>
+	</div>
 </template>
 
-<style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script>
+  import Modal from "./components/Modal";
+  import Search from "./components/Search";
+  import Table from "./components/Table";
+  import Footer from "./components/Footer";
+  import {mapActions, mapGetters} from 'vuex'
 
-#nav {
-  padding: 30px;
-
-  a {
-    font-weight: bold;
-    color: #2c3e50;
-
-    &.router-link-exact-active {
-      color: #42b983;
+  export default {
+    name: 'App',
+    components: {
+      Modal, Search, Table, Footer
+    },
+    data() {
+      return {
+        modalShow: false,
+				pack: {},
+        searchPackages: []
+      }
+    },
+    computed: {
+      ...mapGetters(['packages', 'packageInfo', 'searchValue']),
+      resultPackages() {
+        if (this.searchPackages.length) {
+          return this.searchPackages
+        } else {
+          return this.packages
+        }
+      }
+    },
+    methods: {
+      ...mapActions(['getPackages', 'getPackageInfo', 'getSearchValue']),
+      detailedInfo(pack) {
+        this.getPackageInfo(pack)
+				this.pack = pack
+      },
+      search(value) {
+        this.getSearchValue(value)
+			},
+      seacrhByValue(value) {
+        this.searchPackages = [...this.packages]
+        if (value) {
+          this.searchPackages = this.searchPackages.filter(function (item) {
+            return item.name.toLowerCase().includes(value.toLowerCase())
+          })
+        } else {
+          this.searchPackages = this.packages
+        }
+      }
+    },
+    watch: {
+      searchValue() {
+        this.seacrhByValue(this.searchValue)
+      }
+    },
+    mounted() {
+      this.getPackages()
+        .then((response) => {
+          if (response) {
+            this.seacrhByValue(this.searchValue)
+          }
+        })
     }
   }
-}
+</script>
+
+<style lang="scss">
+	@import '~bootstrap/scss/bootstrap.scss';
 </style>
